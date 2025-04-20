@@ -2,89 +2,62 @@
 File: scanner.py
 
 Description:
-This file serves as the central dispatcher for the Nuvai scanner.
-Its job is to detect what programming language the input code file is written in,
-and then delegate the scanning task to the appropriate scanner module (one per language).
+This is the central scanner dispatcher in the Nuvai system. It determines the language of the source file,
+selects the appropriate scanner module, and runs security checks accordingly.
 
-This makes the system flexible and easy to extend — for example, today we support Python,
-but tomorrow we can add scanners for JavaScript, HTML, C++, TypeScript, JSX, PHP and more.
-
-Currently supported:
+Supported Languages:
 - Python (.py)
-
-Planned:
 - JavaScript (.js)
-- TypeScript (.ts, .tsx)
-- React JSX (.jsx)
+- JSX (.jsx)
 - HTML (.html)
-- C++ (.cpp, .cc)
 - PHP (.php)
+- TypeScript (.ts)
+- C++ (.cpp)
+
+This dispatcher simplifies multi-language support for both CLI tools and future GUI integrations.
 """
 
 import os
+
 from .python_scanner import PythonScanner
-# from .javascript_scanner import JavaScriptScanner
-# from .html_scanner import HTMLScanner
-# from .cpp_scanner import CppScanner
-# from .typescript_scanner import TypeScriptScanner
-# from .php_scanner import PhpScanner
+from .javascript_scanner import JavaScriptScanner
+from .jsx_scanner import JSXScanner
+from .html_scanner import HTMLScanner
+from .php_scanner import PHPScanner
+from .typescript_scanner import TypeScriptScanner
+from .cpp_scanner import CppScanner
 
 
 def get_language(file_path):
-    """
-    Identify the programming language based on file extension.
-    """
-    ext = os.path.splitext(file_path)[1].lower()
-    if ext == ".py":
-        return "python"
-    elif ext == ".js":
-        return "javascript"
-    elif ext in [".ts", ".tsx"]:
-        return "typescript"
-    elif ext == ".jsx":
-        return "jsx"
-    elif ext == ".html":
-        return "html"
-    elif ext in [".cpp", ".cc"]:
-        return "cpp"
-    elif ext == ".php":
-        return "php"
-    return "unknown"
+    ext = os.path.splitext(file_path)[-1].lower()
+    return {
+        ".py": "python",
+        ".js": "javascript",
+        ".jsx": "jsx",
+        ".html": "html",
+        ".php": "php",
+        ".ts": "typescript",
+        ".cpp": "cpp",
+    }.get(ext, "unknown")
 
 
-def scan_code(code: str, language: str):
-    """
-    Run the appropriate scanner based on the detected language.
-    Returns a list of security findings.
-    """
+def scan_code(code, language):
     if language == "python":
         scanner = PythonScanner(code)
-        return scanner.run_all_checks()
-
     elif language == "javascript":
-        print("[INFO] JavaScript scanning not yet implemented.")
-        return []
-
-    elif language == "typescript":
-        print("[INFO] TypeScript scanning not yet implemented.")
-        return []
-
+        scanner = JavaScriptScanner(code)
     elif language == "jsx":
-        print("[INFO] JSX scanning not yet implemented.")
-        return []
-
+        scanner = JSXScanner(code)
     elif language == "html":
-        print("[INFO] HTML scanning not yet implemented.")
-        return []
-
-    elif language == "cpp":
-        print("[INFO] C++ scanning not yet implemented.")
-        return []
-
+        scanner = HTMLScanner(code)
     elif language == "php":
-        print("[INFO] PHP scanning not yet implemented.")
+        scanner = PHPScanner(code)
+    elif language == "typescript":
+        scanner = TypeScriptScanner(code)
+    elif language == "cpp":
+        scanner = CppScanner(code)
+    else:
+        print("❌ Unsupported file type.")
         return []
 
-    else:
-        print("[ERROR] Unsupported or unknown file type.")
-        return []
+    return scanner.run_all_checks()
