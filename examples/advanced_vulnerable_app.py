@@ -1,14 +1,3 @@
-"""
-File: advanced_vulnerable_app.py
-
-Description:
-This file is a demonstration of various high-risk security vulnerabilities
-intentionally included for testing the Nuvai static analysis engine.
-It combines common insecure coding patterns such as dynamic code execution,
-insecure deserialization, path traversal, SSRF, hardcoded credentials,
-and more.
-"""
-
 import os
 import pickle
 import requests

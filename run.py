@@ -2,17 +2,18 @@
 File: run.py
 
 Description:
-Nuvai is the main entry point to the CLI-based code vulnerability scanner.
-It loads a source code file, runs comprehensive static security checks,
-and prints out a summary of the findings. It also offers report export
-in multiple formats such as JSON, TXT, HTML, or PDF.
+This script is the main entry point of the Nuvai scanner tool.
+It loads a source code file, detects its language, routes the content to the correct scanner,
+and then prints a clear summary of the security findings.
 
-This tool is part of the Nuvai suite for AI-generated and No-Code application auditing.
+It also allows the user to export the report in multiple formats.
 """
 
 import argparse
-from src.nuvai.scanner import CodeScanner
-from src.nuvai.report_saver import save_report
+from src.nuvai import get_language, scan_code
+from src.nuvai import report_saver
+import os
+
 
 def load_code(file_path):
     try:
@@ -21,6 +22,7 @@ def load_code(file_path):
     except Exception as e:
         print(f"[ERROR] Failed to load file: {e}")
         exit(1)
+
 
 def print_results(findings):
     if not findings:
@@ -33,26 +35,30 @@ def print_results(findings):
         print(f"- Description: {f['message']}")
         print(f"- Recommendation: {f['recommendation']}")
 
+
+def prompt_export(findings):
+    format_choice = input("\nSelect export format (json / txt / html / pdf): ").strip().lower()
+    path = report_saver.save_report(findings, format_choice)
+    if path:
+        print(f"\n📁 Report saved to: {path}")
+
+
 def main():
-    parser = argparse.ArgumentParser(description="Nuvai - AI Code Vulnerability Scanner")
-    parser.add_argument("file", help="Path to the code file to scan (e.g. app.py)")
+    parser = argparse.ArgumentParser(description="Nuvai - Multi-language Code Security Scanner")
+    parser.add_argument("file", help="Path to the code file to scan (e.g. app.py, index.js, main.cpp, page.tsx, view.php)")
     args = parser.parse_args()
 
-    code = load_code(args.file)
-    scanner = CodeScanner(code)
-    findings = scanner.run_all_checks()
-    print_results(findings)
+    file_path = args.file
+    code = load_code(file_path)
+    language = get_language(file_path)
 
+    print(f"\n🔎 Detected language: {language.capitalize()}")
+    findings = scan_code(code, language)
+
+    print_results(findings)
     if findings:
-        format_choice = input("\nSelect export format (json / txt / html / pdf): ").strip().lower()
-        if format_choice in ["json", "txt", "html", "pdf"]:
-            saved_path = save_report(findings, format_choice)
-            if saved_path:
-                print(f"\n✅ Report saved to: {saved_path}")
-            else:
-                print("⚠️ Report could not be saved in the selected format.")
-        else:
-            print("❌ Invalid format. Report was not saved.")
+        prompt_export(findings)
+
 
 if __name__ == "__main__":
     main()
