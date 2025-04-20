@@ -1,20 +1,16 @@
 """
-File: advanced_vulnerable_app.py
+File: vulnerable_app.py
 
 Description:
-This file is a demonstration of various high-risk security vulnerabilities
-intentionally included for testing the Nuvai static analysis engine.
-It combines common insecure coding patterns such as dynamic code execution,
-insecure deserialization, path traversal, SSRF, hardcoded credentials,
-and more.
+This file demonstrates high-risk vulnerabilities for testing Nuvai's engine.
+All examples use built-in Python libraries only — no external dependencies.
 """
 
 import os
 import pickle
-import requests
 import logging
 import hashlib
-import jwt
+import urllib.request  # Replaces requests (standard library only)
 
 DEBUG = True
 
@@ -29,13 +25,14 @@ os.system(user_input)
 file_path = "../../etc/passwd"
 open(file_path, "r")
 
-url = "http://internal.api/" + user_input
-requests.get(url)
+url = "http://example.com/" + user_input
+try:
+    urllib.request.urlopen(url)
+except:
+    pass
 
-data = pickle.loads(user_input)
+data = pickle.loads(user_input.encode())
 
 hashed = hashlib.md5(password.encode()).hexdigest()
-
-decoded = jwt.decode(token, options={"verify": False})
 
 logging.info("Logging sensitive info: password=%s", password)
