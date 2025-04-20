@@ -124,6 +124,4 @@ If you like this project, give it a ⭐ on [GitHub](https://github.com/tinkerlev
 ---
 
 ## 📄 License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-> Security is not optional — this tool makes it accessible.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/tinkerlev/Nuvai/blob/main/LICENSE) file for details.
