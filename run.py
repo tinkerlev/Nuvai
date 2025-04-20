@@ -4,7 +4,7 @@ File: run.py
 Description:
 Main CLI entry point for Nuvai.
 This script allows scanning a single code file (e.g., vulnerable_app.py),
-or, if no file is provided, scans all supported example files in the /examples directory.
+or, if no file is provided, prompts the user to specify a folder to scan all files in it.
 It supports export in multiple formats and automatically saves the report.
 '''
 
@@ -47,15 +47,21 @@ def scan_and_save(file):
 def main():
     parser = argparse.ArgumentParser(description="Nuvai - AI Security Code Scanner")
     parser.add_argument("file", nargs='?', help="Path to the code file to scan (e.g. app.py)")
+    parser.add_argument("--dir", help="Directory containing files to scan (default: examples)")
     args = parser.parse_args()
 
     if args.file:
         scan_and_save(args.file)
     else:
-        example_dir = os.path.join(os.path.dirname(__file__), "examples")
-        files = [f for f in os.listdir(example_dir) if f.startswith("vulnerable_app.")]
+        folder = args.dir if args.dir else input("📁 Enter folder to scan (default = ./examples): ").strip() or "examples"
+        folder_path = os.path.join(os.path.dirname(__file__), folder)
+        if not os.path.exists(folder_path):
+            print(f"❌ Folder not found: {folder_path}")
+            return
+
+        files = [f for f in os.listdir(folder_path) if f.startswith("vulnerable_app.")]
         for file in files:
-            file_path = os.path.join(example_dir, file)
+            file_path = os.path.join(folder_path, file)
             scan_and_save(file_path)
 
 if __name__ == "__main__":
