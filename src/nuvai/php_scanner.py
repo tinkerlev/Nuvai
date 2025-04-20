@@ -2,27 +2,27 @@
 File: php_scanner.py
 
 Description:
-This module scans PHP source code for common and critical security vulnerabilities.
-It is part of Nuvai's multi-language static analysis engine, focusing on insecure
-coding practices such as unsanitized input, insecure functions, weak configurations,
-and authentication/session management issues.
+This module scans PHP source code for critical security vulnerabilities. As part of Nuvai's
+multi-language static analysis engine, it is designed to detect risky coding patterns
+in PHP-based applications – including those created via AI or no-code platforms.
 
 Implemented Checks:
-- Use of dangerous functions: eval, system, exec, passthru, shell_exec, popen
+- Dangerous function usage (eval, system, exec, passthru, shell_exec, popen)
 - SQL injection via unsanitized $_GET/$_POST/$_REQUEST
-- Reflected XSS using echo/print on raw input
+- Reflected XSS using echo/print of user input
 - File inclusion attacks (LFI/RFI)
-- Hardcoded credentials (DB user/pass)
-- Enabled error_reporting in production
+- Hardcoded credentials (database user/pass)
+- Error reporting enabled in production
 - Missing session_regenerate_id after login
-- Unvalidated file uploads ($_FILES)
-- Use of insecure hashing (md5, sha1)
-- Lack of CSRF protection in forms
-- Use of insecure random functions (rand, mt_rand)
-- Exposure of PHP version via headers
+- Insecure file uploads ($_FILES)
+- Weak hashing (md5, sha1)
+- CSRF protection missing in forms
+- Insecure random number generators (rand, mt_rand)
+- PHP version exposure via headers
+- Cookie flags missing (HttpOnly, Secure)
+- Superglobals passed into output logic
 
-Note: This module uses regex-based scanning and is not a full PHP parser.
-It aims to detect risky patterns in AI-generated, legacy, or hand-written code.
+Note: Regex-based pattern matching – not full AST parsing.
 """
 
 import re
@@ -39,12 +39,14 @@ class PHPScanner:
         self.check_file_inclusion()
         self.check_hardcoded_credentials()
         self.check_error_reporting()
-        self.check_session_security()
+        self.check_session_regeneration()
         self.check_file_uploads()
-        self.check_insecure_hashing()
-        self.check_csrf_tokens()
+        self.check_weak_hashing()
+        self.check_csrf_protection()
         self.check_insecure_random()
         self.check_php_version_exposure()
+        self.check_insecure_cookies()
+        self.check_raw_superglobal_output()
         return self.findings
 
     def add_finding(self, level, ftype, message, recommendation):
@@ -57,109 +59,56 @@ class PHPScanner:
 
     def check_eval_system(self):
         if re.search(r'\b(eval|system|exec|passthru|shell_exec|popen)\s*\(', self.code):
-            self.add_finding(
-                "CRITICAL",
-                "Dangerous Function Execution",
-                "Use of functions like eval, system, exec, shell_exec, or popen detected.",
-                "Avoid dangerous execution functions. Use built-in PHP logic or sandboxed subprocesses."
-            )
+            self.add_finding("CRITICAL", "Dangerous Function Execution", "Use of insecure function: eval/system/etc.", "Avoid dangerous functions. Use safer abstractions or escape/sanitize input.")
 
     def check_sql_injection(self):
-        if re.search(r'\$_(GET|POST|REQUEST).*\.("|\')?\s*(SELECT|INSERT|UPDATE|DELETE)', self.code, re.IGNORECASE):
-            self.add_finding(
-                "HIGH",
-                "Possible SQL Injection",
-                "SQL query appears to use unsanitized user input.",
-                "Use PDO or MySQLi prepared statements with bound parameters."
-            )
+        if re.search(r'\$_(GET|POST|REQUEST).*\.(SELECT|INSERT|UPDATE|DELETE)', self.code, re.IGNORECASE):
+            self.add_finding("HIGH", "Possible SQL Injection", "Unsanitized user input detected in SQL query.", "Use PDO/MySQLi with prepared statements.")
 
     def check_xss_echo(self):
         if re.search(r'(echo|print)\s*\$_(GET|POST|REQUEST|COOKIE)', self.code):
-            self.add_finding(
-                "HIGH",
-                "Reflected XSS",
-                "User input is printed without encoding or sanitization.",
-                "Escape output with htmlspecialchars or use a templating engine."
-            )
+            self.add_finding("HIGH", "Reflected XSS", "User input directly echoed without encoding.", "Escape output with htmlspecialchars().")
 
     def check_file_inclusion(self):
         if re.search(r'(include|require|include_once|require_once)\s*\(\s*\$_(GET|POST|REQUEST)', self.code):
-            self.add_finding(
-                "HIGH",
-                "Dynamic File Inclusion",
-                "Includes file path directly from user input.",
-                "Use strict whitelisting or routing mechanisms."
-            )
+            self.add_finding("HIGH", "File Inclusion", "File path dynamically included from user input.", "Avoid dynamic file inclusion. Use whitelisting.")
 
     def check_hardcoded_credentials(self):
-        if re.search(r'(host|user|pass|dbname)\s*=\s*[\'\"]\w{4,}[\'\"]', self.code, re.IGNORECASE):
-            self.add_finding(
-                "HIGH",
-                "Hardcoded Credentials",
-                "Sensitive database credentials found in source code.",
-                "Store them in environment variables or secure config outside webroot."
-            )
+        if re.search(r'(host|user|pass|dbname)\s*=\s*["\']\w+["\']', self.code, re.IGNORECASE):
+            self.add_finding("HIGH", "Hardcoded Credentials", "Database credentials found in code.", "Use environment config files outside web root.")
 
     def check_error_reporting(self):
         if re.search(r'error_reporting\s*\(', self.code):
-            self.add_finding(
-                "INFO",
-                "Error Reporting Enabled",
-                "Production code should not reveal detailed errors.",
-                "Turn off error reporting or log to secure location in production."
-            )
+            self.add_finding("INFO", "Error Reporting Enabled", "PHP error reporting is active.", "Disable error reporting on production servers.")
 
-    def check_session_security(self):
+    def check_session_regeneration(self):
         if 'session_start()' in self.code and 'session_regenerate_id' not in self.code:
-            self.add_finding(
-                "WARNING",
-                "Session Fixation Risk",
-                "Session started without regenerating session ID after authentication.",
-                "Call session_regenerate_id(true) immediately after login."
-            )
+            self.add_finding("WARNING", "Session Fixation Risk", "Session not regenerated after login.", "Call session_regenerate_id(true) after authentication.")
 
     def check_file_uploads(self):
-        if re.search(r'\$_FILES\[.+\]', self.code):
-            if not re.search(r'(mime_content_type|finfo_open|pathinfo)', self.code):
-                self.add_finding(
-                    "HIGH",
-                    "Unvalidated File Upload",
-                    "Detected file upload without proper validation.",
-                    "Use finfo/mime type checks, whitelist extensions, and store outside webroot."
-                )
+        if re.search(r'\$_FILES\[.+\]', self.code) and not re.search(r'(mime_content_type|finfo_open|pathinfo)', self.code):
+            self.add_finding("HIGH", "Unvalidated File Upload", "File upload found without validation.", "Check MIME type and store uploaded files outside webroot.")
 
-    def check_insecure_hashing(self):
+    def check_weak_hashing(self):
         if re.search(r'(md5|sha1)\s*\(', self.code):
-            self.add_finding(
-                "MEDIUM",
-                "Weak Hashing Algorithm",
-                "Use of MD5 or SHA1 is insecure for password storage or signatures.",
-                "Use password_hash() or SHA-256/SHA-512."
-            )
+            self.add_finding("MEDIUM", "Weak Hash Algorithm", "Use of insecure hash function.", "Use password_hash() or SHA-256/SHA-512.")
 
-    def check_csrf_tokens(self):
+    def check_csrf_protection(self):
         if re.search(r'<form', self.code) and not re.search(r'csrf_token', self.code, re.IGNORECASE):
-            self.add_finding(
-                "WARNING",
-                "CSRF Protection Missing",
-                "Form does not appear to implement CSRF tokens.",
-                "Add hidden CSRF tokens and validate them server-side."
-            )
+            self.add_finding("WARNING", "Missing CSRF Token", "Form missing CSRF protection.", "Add CSRF token hidden field and validate it server-side.")
 
     def check_insecure_random(self):
         if re.search(r'\b(rand|mt_rand)\s*\(', self.code):
-            self.add_finding(
-                "WARNING",
-                "Insecure Random Generator",
-                "Use of rand() or mt_rand() is not cryptographically secure.",
-                "Use random_bytes() or random_int() instead."
-            )
+            self.add_finding("WARNING", "Insecure Random Generator", "Use of rand() or mt_rand() is insecure.", "Use random_int() or openssl_random_pseudo_bytes().")
 
     def check_php_version_exposure(self):
-        if re.search(r'header\s*\(\s*\"X-Powered-By:\s*PHP', self.code, re.IGNORECASE):
-            self.add_finding(
-                "INFO",
-                "PHP Version Disclosure",
-                "Response header reveals PHP version.",
-                "Disable 'expose_php' in php.ini to hide version info."
-            )
+        if re.search(r'header\s*\(\s*"X-Powered-By:\s*PHP', self.code, re.IGNORECASE):
+            self.add_finding("INFO", "PHP Version Disclosure", "PHP version exposed in HTTP headers.", "Disable expose_php in php.ini.")
+
+    def check_insecure_cookies(self):
+        if re.search(r'setcookie\s*\(', self.code) and not re.search(r'(HttpOnly|Secure)', self.code):
+            self.add_finding("WARNING", "Insecure Cookie", "Cookies missing Secure or HttpOnly flags.", "Set flags to protect cookies from theft.")
+
+    def check_raw_superglobal_output(self):
+        if re.search(r'\$_(GET|POST|REQUEST|COOKIE|SERVER)\s*;', self.code):
+            self.add_finding("MEDIUM", "Raw Superglobal Output", "Superglobal used without sanitization.", "Always validate and escape superglobal values.")

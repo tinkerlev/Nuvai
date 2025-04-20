@@ -2,28 +2,24 @@
 File: typescript_scanner.py
 
 Description:
-This module scans TypeScript source code for security vulnerabilities.
-It is part of Nuvai's multi-language static analysis engine and is designed to catch
-patterns that could lead to injection, insecure data handling, or logic flaws in
-modern frontend/backend TypeScript apps (including Node.js and Angular/React codebases).
+This module scans TypeScript source code for security vulnerabilities using pattern-based
+static analysis. It is part of Nuvai's multi-language scanning engine and focuses on
+TypeScript-specific issues such as unsafe typing, insecure API calls, and improper error handling.
 
 Implemented Checks:
-- Use of eval, new Function, setTimeout/setInterval with string
-- Unsanitized user input from URL, cookies, headers
-- Access to window/document with direct DOM manipulation
-- Exposure of tokens/API keys in code
-- Missing input validation on parameters
-- Insecure deserialization via JSON.parse
-- Usage of innerHTML or dangerouslySetInnerHTML
-- Overuse of any type
-- Insecure random generation (Math.random)
-- Console logging of sensitive data
-- Bypassing TypeScript type system with type assertions (as unknown as ...)
-- Using allowJs or skipLibCheck in tsconfig
-- Inclusion of secrets in source maps (.map files)
-- Missing helmet/cors middleware in Express apps
+- Dangerous use of eval(), new Function(), setTimeout with string
+- Use of `any` or `as any` (unsafe typing)
+- Unescaped or unsanitized user input into DOM or output
+- Hardcoded credentials or tokens
+- Insecure HTTP requests (fetch, axios)
+- Missing null checks before property access
+- Unhandled promise rejections (then without catch)
+- Insecure use of browser storage
+- Debug/logging statements (console.log, debugger)
+- Insecure assignments to window.location or document.referrer
+- Suspicious comment disclosures (TODO, passwords, debug)
 
-Note: Uses regex-based scanning for simplicity and speed. Not a full AST parser.
+Note: Regex-based scanner. Future improvements may use TypeScript AST parsing.
 """
 
 import re
@@ -34,20 +30,17 @@ class TypeScriptScanner:
         self.findings = []
 
     def run_all_checks(self):
-        self.check_eval_usage()
-        self.check_user_input_sources()
-        self.check_dom_access()
-        self.check_secrets_exposure()
-        self.check_missing_validation()
-        self.check_json_parse()
-        self.check_innerhtml()
-        self.check_any_type()
-        self.check_insecure_random()
-        self.check_sensitive_logging()
-        self.check_type_assertions()
-        self.check_tsconfig_flags()
-        self.check_express_middleware()
-        self.check_source_map_leak()
+        self.check_dangerous_eval()
+        self.check_any_type_usage()
+        self.check_unsanitized_input()
+        self.check_hardcoded_secrets()
+        self.check_insecure_requests()
+        self.check_null_checks()
+        self.check_unhandled_promises()
+        self.check_insecure_storage()
+        self.check_debug_statements()
+        self.check_unvalidated_navigation()
+        self.check_sensitive_comments()
         return self.findings
 
     def add_finding(self, level, ftype, message, recommendation):
@@ -58,60 +51,46 @@ class TypeScriptScanner:
             "recommendation": recommendation
         })
 
-    def check_eval_usage(self):
-        if re.search(r'eval\s*\(', self.code) or re.search(r'new Function\s*\(', self.code):
-            self.add_finding("CRITICAL", "Dynamic Code Execution", "Use of eval() or new Function() detected.", "Avoid dynamic execution. Use safe logic alternatives.")
-        if re.search(r'setTimeout\s*\(\s*"', self.code) or re.search(r'setInterval\s*\(\s*"', self.code):
-            self.add_finding("HIGH", "String-based Timer Execution", "Timer function receives a string, which behaves like eval().", "Pass functions instead of strings.")
+    def check_dangerous_eval(self):
+        if re.search(r'(eval|new Function|setTimeout\s*\(\s*\")', self.code):
+            self.add_finding("CRITICAL", "Dynamic Code Execution", "Use of eval, new Function or setTimeout with string detected.", "Avoid dynamic code. Use strict logic flow.")
 
-    def check_user_input_sources(self):
-        if re.search(r'(location|document\.cookie|headers|params|req\.query|req\.body)', self.code):
-            self.add_finding("MEDIUM", "Untrusted Input Source", "Reading from URL, cookies, or request objects.", "Always sanitize and validate user input.")
+    def check_any_type_usage(self):
+        if re.search(r'\:\s*any\b|as\s+any\b', self.code):
+            self.add_finding("WARNING", "Unsafe Typing", "TypeScript type 'any' used.", "Use explicit types to maintain type safety.")
 
-    def check_dom_access(self):
-        if re.search(r'document\.(getElementById|getElementsByClassName|querySelector)', self.code):
-            self.add_finding("WARNING", "Direct DOM Access", "Accessing DOM directly can lead to XSS or logic flaws.", "Use frameworks' safe methods or sanitize input.")
+    def check_unsanitized_input(self):
+        if re.search(r'(document|window)\.(getElementById|getElementsByClassName|querySelector).*\.value', self.code):
+            self.add_finding("HIGH", "Unsanitized DOM Input", "DOM input accessed without validation.", "Sanitize all user input before use.")
 
-    def check_secrets_exposure(self):
-        if re.search(r'(apiKey|token|secret)\s*=\s*["\']\w{20,}["\']', self.code):
-            self.add_finding("HIGH", "Hardcoded Secret", "Found what appears to be a hardcoded secret.", "Move secrets to env vars or secure configs.")
+    def check_hardcoded_secrets(self):
+        if re.search(r'(api|token|secret|key|password)\s*[:=]\s*["\']\w{8,}["\']', self.code, re.IGNORECASE):
+            self.add_finding("HIGH", "Hardcoded Secret", "Detected secret/token directly in code.", "Move sensitive credentials to environment variables.")
 
-    def check_missing_validation(self):
-        if re.search(r'(req|input)\.(query|body|params)', self.code) and not re.search(r'(validate|zod|joi|class-validator)', self.code):
-            self.add_finding("MEDIUM", "Missing Input Validation", "No validation logic found on user-supplied parameters.", "Use input validation libraries such as Joi or Zod.")
+    def check_insecure_requests(self):
+        if re.search(r'(fetch|axios)\(\s*\"http:', self.code):
+            self.add_finding("HIGH", "Insecure API Request", "HTTP request made without HTTPS.", "Always use secure HTTPS endpoints.")
 
-    def check_json_parse(self):
-        if re.search(r'JSON\.parse\s*\(', self.code):
-            self.add_finding("MEDIUM", "Insecure Deserialization", "Use of JSON.parse may deserialize unsafe data.", "Wrap in try/catch and validate structure after parsing.")
+    def check_null_checks(self):
+        if re.search(r'\w+\.\w+\s*\(', self.code) and not re.search(r'\?\.', self.code):
+            self.add_finding("MEDIUM", "Missing Optional Chaining", "Function/property accessed without null check.", "Use optional chaining or explicit validation.")
 
-    def check_innerhtml(self):
-        if re.search(r'(innerHTML|dangerouslySetInnerHTML)\s*=', self.code):
-            self.add_finding("HIGH", "Unsafe HTML Injection", "Direct assignment to innerHTML or dangerouslySetInnerHTML.", "Use safe rendering practices and sanitize HTML.")
+    def check_unhandled_promises(self):
+        if re.search(r'\.then\(.*\)[^\.catch]', self.code):
+            self.add_finding("WARNING", "Unhandled Promise Rejection", "Promise used without catch() or try/catch.", "Always handle promise errors explicitly.")
 
-    def check_any_type(self):
-        if re.search(r'\:\s*any', self.code):
-            self.add_finding("WARNING", "Overuse of any Type", "Use of 'any' defeats type safety.", "Use explicit interfaces or stricter types instead.")
+    def check_insecure_storage(self):
+        if re.search(r'(localStorage|sessionStorage|document\.cookie)', self.code):
+            self.add_finding("WARNING", "Insecure Storage Usage", "Sensitive data stored in browser storage.", "Avoid storing secrets in local/session storage.")
 
-    def check_insecure_random(self):
-        if re.search(r'Math\.random\s*\(', self.code):
-            self.add_finding("WARNING", "Insecure Random Generator", "Math.random is not cryptographically secure.", "Use crypto.getRandomValues or external lib.")
+    def check_debug_statements(self):
+        if re.search(r'console\.log|debugger', self.code):
+            self.add_finding("INFO", "Debug Statement", "console.log/debugger detected in code.", "Remove debug statements before shipping code.")
 
-    def check_sensitive_logging(self):
-        if re.search(r'console\.(log|debug)\([^)]*(password|token|secret)', self.code, re.IGNORECASE):
-            self.add_finding("INFO", "Sensitive Data in Logs", "Sensitive keyword logged to console.", "Avoid logging sensitive values in production.")
+    def check_unvalidated_navigation(self):
+        if re.search(r'(window\.location|document\.referrer)\s*=\s*', self.code):
+            self.add_finding("HIGH", "Unvalidated Redirect", "Detected assignment to navigation location.", "Avoid redirecting users based on untrusted input.")
 
-    def check_type_assertions(self):
-        if re.search(r'as\s+unknown\s+as\s+', self.code):
-            self.add_finding("WARNING", "Unsafe Type Assertion", "Bypassing type system using 'as unknown as'.", "Use safe type guards or validators instead.")
-
-    def check_tsconfig_flags(self):
-        if re.search(r'("skipLibCheck"\s*:\s*true|"allowJs"\s*:\s*true)', self.code):
-            self.add_finding("INFO", "Weak TypeScript Configuration", "TypeScript config may be suppressing important checks.", "Avoid skipLibCheck and allowJs for strict type safety.")
-
-    def check_express_middleware(self):
-        if 'express()' in self.code and not re.search(r'(helmet|cors)', self.code):
-            self.add_finding("WARNING", "Missing Security Middleware", "Express app missing Helmet or CORS setup.", "Use helmet() and cors() for basic security headers and protections.")
-
-    def check_source_map_leak(self):
-        if re.search(r'\.map\s*$', self.code):
-            self.add_finding("WARNING", "Source Map Exposure", "Possible inclusion of source maps in production.", "Ensure .map files are not deployed in production environments.")
+    def check_sensitive_comments(self):
+        if re.search(r'//.*(todo|password|debug)', self.code, re.IGNORECASE):
+            self.add_finding("INFO", "Sensitive Comment", "Potentially sensitive comment in code.", "Remove leftover debug or password hints.")

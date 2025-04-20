@@ -2,31 +2,21 @@
 File: report_saver.py
 
 Description:
-This module is part of the Nuvai suite.
-It provides a function to save security scan results in various formats:
-JSON, TXT, HTML, or PDF. It creates a directory named "security_reports" in the
-user's home folder (if it doesn't already exist), and saves the report file there
-with a timestamp in the filename (e.g., scanner_2025-04-19_17-30-00.pdf).
+This module provides functionality to export scan results from the Nuvai engine into various formats,
+allowing users to analyze or share findings easily. It supports saving reports in JSON, TXT, HTML,
+and PDF formats, and automatically creates a `security_reports/` directory in the user's home folder.
 
-Supported formats:
-- json  → structured machine-readable format
-- txt   → plain text for easy reading
-- html  → styled document viewable in browsers
-- pdf   → printable or shareable format (only if FPDF is available)
+Features:
+- Supports export formats: .json, .txt, .html, .pdf
+- Automatically names reports using a timestamp (e.g., scanner_2025-04-20_14-00-00.txt)
+- Creates export directory if it doesn't exist
+- Handles fallback for PDF generation dynamically inside the function
 
-The goal is to provide users with clear, professional reporting options
-and ensure seamless integration with the Nuvai code auditing workflow.
+Compatible with systems where pip is restricted (e.g., Kali Linux, Windows lockdowns).
 """
 
 import os
 from datetime import datetime
-
-# Try to import FPDF
-PDF_AVAILABLE = True
-try:
-    from fpdf import FPDF
-except ImportError:
-    PDF_AVAILABLE = False
 
 def ensure_report_directory():
     home = os.path.expanduser("~")
@@ -57,8 +47,8 @@ def save_report(findings, extension):
 
     elif extension == "html":
         with open(full_path, "w", encoding="utf-8") as f:
-            f.write("<html><head><meta charset='UTF-8'><title>Nuvai Scan Report</title></head><body>")
-            f.write("<h1>Security Scan Report - Nuvai</h1>")
+            f.write("<html><head><meta charset='UTF-8'><title>Scan Report</title></head><body>")
+            f.write("<h1>Security Scan Report</h1>")
             for fnd in findings:
                 f.write(f"<h2>[{fnd['level']}] {fnd['type']}</h2>")
                 f.write(f"<p><strong>Description:</strong> {fnd['message']}</p>")
@@ -66,14 +56,17 @@ def save_report(findings, extension):
             f.write("</body></html>")
 
     elif extension == "pdf":
-        if not PDF_AVAILABLE:
-            print("⚠️ PDF export not available. Please install 'fpdf' to enable PDF reports.")
+        try:
+            from fpdf import FPDF
+        except ImportError:
+            print("⚠️ PDF export not available. To enable it, install fpdf using a virtual environment:")
+            print("💡 Example: python3 -m venv .venv && source .venv/bin/activate && pip install fpdf")
             return None
 
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt="Nuvai Security Scan Report", ln=True, align="C")
+        pdf.cell(200, 10, txt="Security Scan Report", ln=True, align="C")
         for fnd in findings:
             pdf.set_font("Arial", "B", 12)
             pdf.cell(200, 10, txt=f"[{fnd['level']}] {fnd['type']}", ln=True)

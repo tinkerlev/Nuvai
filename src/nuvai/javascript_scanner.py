@@ -2,22 +2,24 @@
 File: javascript_scanner.py
 
 Description:
-This module scans JavaScript source code for common security vulnerabilities.
-It is part of Nuvai's multi-language static analysis engine and focuses on
-identifying patterns that lead to injection attacks, insecure DOM manipulation,
-unsafe APIs, or logic flaws.
+This module scans raw JavaScript code for security flaws using static analysis and pattern
+recognition. It is part of Nuvai's advanced multi-language scanning engine and focuses on
+client-side logic issues, injection risks, data exposure, and unsafe API practices – all
+of which are common in AI-generated and no-code JS codebases.
 
 Implemented Checks:
-- Use of eval, new Function, or setTimeout with string
-- Direct DOM access with innerHTML or document.write
-- Unsanitized user input from location, cookies, or forms
-- Insecure use of XMLHttpRequest or fetch with dynamic input
-- Suspicious script inclusion from untrusted domains
-- Hardcoded secrets like API keys or tokens
-- Overwritten or shadowed built-in objects
+- Dangerous function usage (eval, Function, setTimeout with string)
+- DOM-based XSS (innerHTML, outerHTML, document.write)
+- Insecure storage access (localStorage, sessionStorage, document.cookie)
+- Hardcoded secrets (keys, tokens, passwords)
+- Debug statements (console.log, debugger)
+- Insecure HTTP API calls
+- Direct access to URL params without sanitization
+- Use of XMLHttpRequest without proper CORS/security headers
+- Insecure assignments to location.href or window.name
+- Missing validation on user-generated content
 
-Note: This is a lightweight static scanner using regular expressions.
-It does not parse or execute JavaScript.
+Note: Regex-based detection. Future updates may incorporate AST-based analysis.
 """
 
 import re
@@ -28,13 +30,16 @@ class JavaScriptScanner:
         self.findings = []
 
     def run_all_checks(self):
-        self.check_eval_usage()
-        self.check_dom_injection()
-        self.check_user_input_sources()
-        self.check_insecure_fetch()
-        self.check_external_scripts()
-        self.check_hardcoded_tokens()
-        self.check_shadowed_globals()
+        self.check_dangerous_eval()
+        self.check_dom_xss()
+        self.check_insecure_storage()
+        self.check_hardcoded_secrets()
+        self.check_debug_statements()
+        self.check_insecure_http()
+        self.check_unsanitized_url_params()
+        self.check_xmlhttp_request()
+        self.check_unprotected_navigation()
+        self.check_unvalidated_user_content()
         return self.findings
 
     def add_finding(self, level, ftype, message, recommendation):
@@ -45,72 +50,42 @@ class JavaScriptScanner:
             "recommendation": recommendation
         })
 
-    def check_eval_usage(self):
-        if re.search(r'eval\s*\(', self.code) or re.search(r'new Function\s*\(', self.code):
-            self.add_finding(
-                "CRITICAL",
-                "Dynamic Code Execution",
-                "Use of eval() or new Function() detected.",
-                "Avoid dynamic execution. Use safe logic alternatives."
-            )
-        if re.search(r'setTimeout\s*\(\s*"', self.code):
-            self.add_finding(
-                "HIGH",
-                "String-based Timer Execution",
-                "setTimeout uses a string, which behaves like eval().",
-                "Use function references or arrow functions instead."
-            )
+    def check_dangerous_eval(self):
+        if re.search(r'\b(eval|Function|setTimeout|setInterval)\s*\(', self.code):
+            self.add_finding("CRITICAL", "Dynamic Code Execution", "Use of eval or similar constructs detected.", "Avoid dynamic code execution. Use strict logic paths.")
 
-    def check_dom_injection(self):
-        if re.search(r'(innerHTML|document\.write)\s*=\s*', self.code):
-            self.add_finding(
-                "HIGH",
-                "DOM-Based Injection",
-                "Direct DOM manipulation via innerHTML or document.write.",
-                "Use textContent or DOM sanitization libraries."
-            )
+    def check_dom_xss(self):
+        if re.search(r'(innerHTML|outerHTML|document\.write)', self.code):
+            self.add_finding("HIGH", "DOM-based XSS", "Direct DOM manipulation using unsanitized data.", "Avoid setting HTML using user input. Sanitize all dynamic content.")
 
-    def check_user_input_sources(self):
-        if re.search(r'(location|document\.cookie|window\.name|localStorage\.getItem)', self.code):
-            self.add_finding(
-                "MEDIUM",
-                "Untrusted Input Source",
-                "Reading from URL, cookies, or localStorage without sanitization.",
-                "Validate and sanitize input before usage."
-            )
+    def check_insecure_storage(self):
+        if re.search(r'(localStorage|sessionStorage|document\.cookie)', self.code):
+            self.add_finding("WARNING", "Insecure Storage Usage", "Sensitive data accessed from browser storage.", "Avoid using local/session storage or cookies for secrets.")
 
-    def check_insecure_fetch(self):
-        if re.search(r'(fetch|XMLHttpRequest)', self.code) and re.search(r'\+\s*user', self.code):
-            self.add_finding(
-                "MEDIUM",
-                "Insecure Request Composition",
-                "Dynamic fetch or XHR URL may allow SSRF or data leaks.",
-                "Build URLs safely with strict input validation."
-            )
+    def check_hardcoded_secrets(self):
+        if re.search(r'(api|token|secret|key|password)\s*[:=]\s*["\']\w{8,}["\']', self.code, re.IGNORECASE):
+            self.add_finding("HIGH", "Hardcoded Secret", "Sensitive key or token found in source code.", "Store secrets in secure backend or config files.")
 
-    def check_external_scripts(self):
-        if re.search(r'<script\s+src=\"http://', self.code):
-            self.add_finding(
-                "HIGH",
-                "External Script Inclusion",
-                "Script loaded from an untrusted or insecure source.",
-                "Only include trusted scripts over HTTPS."
-            )
+    def check_debug_statements(self):
+        if re.search(r'(console\.log|debugger)', self.code):
+            self.add_finding("INFO", "Debug Statement Detected", "Debugging code found.", "Remove console.log or debugger statements before deployment.")
 
-    def check_hardcoded_tokens(self):
-        if re.search(r'(apiKey|token|secret)\s*=\s*["\']\w{20,}["\']', self.code):
-            self.add_finding(
-                "HIGH",
-                "Hardcoded Secret",
-                "Sensitive key or token hardcoded in the code.",
-                "Use environment configs or secret managers."
-            )
+    def check_insecure_http(self):
+        if re.search(r'fetch\("http:|axios\.get\("http:', self.code):
+            self.add_finding("HIGH", "Insecure HTTP Request", "HTTP connection used instead of HTTPS.", "Use secure HTTPS URLs for all network requests.")
 
-    def check_shadowed_globals(self):
-        if re.search(r'(Array|Object|String|window|document)\s*=\s*', self.code):
-            self.add_finding(
-                "WARNING",
-                "Overwriting Built-In Objects",
-                "Global built-in object is being reassigned.",
-                "Avoid redefining built-ins to prevent unexpected behavior."
-            )
+    def check_unsanitized_url_params(self):
+        if re.search(r'location\.search|URLSearchParams', self.code) and not re.search(r'sanitize|encode', self.code):
+            self.add_finding("HIGH", "Unsanitized URL Parameter", "Use of URL parameters without validation.", "Validate or sanitize user input from URLs.")
+
+    def check_xmlhttp_request(self):
+        if re.search(r'new\s+XMLHttpRequest\(\)', self.code):
+            self.add_finding("WARNING", "Unrestricted XMLHttpRequest", "Raw XHR usage found.", "Use fetch() with proper CORS and security headers.")
+
+    def check_unprotected_navigation(self):
+        if re.search(r'(location\.href|window\.name)\s*=\s*', self.code):
+            self.add_finding("MEDIUM", "Uncontrolled Redirect", "URL redirection logic found.", "Avoid assigning user input to location.href or window.name.")
+
+    def check_unvalidated_user_content(self):
+        if re.search(r'(userInput|userData|data)\s*[:=]', self.code) and re.search(r'(innerHTML|document\.write)', self.code):
+            self.add_finding("HIGH", "Unvalidated User Content", "Untrusted data written directly to DOM.", "Escape or sanitize all user-generated content.")

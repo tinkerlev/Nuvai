@@ -2,33 +2,34 @@
 File: run.py
 
 Description:
-This is the main entry point for running Nuvai from the command line.
-It loads a source code file, detects its programming language,
-uses the appropriate scanner engine, and prints out a security report.
+This is the main CLI entry point for Nuvai – the AI-aware, multi-language code vulnerability scanner.
+It handles user input (file path and output format), invokes the language-specific scanner,
+and provides a detailed vulnerability report either on screen or as an exportable file.
 
-Supports output formats: json, txt, html, pdf.
-Automatically stores results in ~/security_reports.
-
-Note: This CLI interface is designed for both technical and non-technical users.
+Key Features:
+- Auto-detection of programming language via file extension
+- Secure file loading with UTF-8 validation
+- Clear CLI output and export options: json, txt, html, pdf
+- Automatic creation of `~/security_reports` directory for saved results
+- Designed for professional red team / audit / educational use
 """
 
 import argparse
-import os
-
-from src.nuvai.scanner import get_language, scan_code
+from src.nuvai import get_language, scan_code
 from src.nuvai.report_saver import save_report
+import os
 
 def load_code(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
-        print(f"[ERROR] Failed to load file: {e}")
+        print(f"\n❌ Failed to load file: {e}\n")
         exit(1)
 
 def print_results(findings):
     if not findings:
-        print("✅ No critical issues found in the code.")
+        print("\n✅ No critical issues found in the code.\n")
         return
 
     print("\n🔍 Security Findings:")
@@ -38,21 +39,29 @@ def print_results(findings):
         print(f"- Recommendation: {f['recommendation']}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Nuvai - AI Code Vulnerability Scanner")
-    parser.add_argument("file", help="Path to the code file to scan (e.g. app.py, index.js)")
-    parser.add_argument("--format", choices=["json", "txt", "html", "pdf"], default="txt",
-                        help="Output format for report (default: txt)")
+    parser = argparse.ArgumentParser(description="Nuvai - AI-Aware Code Vulnerability Scanner")
+    parser.add_argument("file", help="Path to source code file (e.g. app.py, main.ts)")
+    parser.add_argument("--export", choices=["json", "txt", "html", "pdf"], help="Optional export format")
     args = parser.parse_args()
 
-    code = load_code(args.file)
-    lang = get_language(args.file)
-    print(f"🔎 Detected language: {lang}")
-    findings = scan_code(code, lang)
+    file_path = args.file
+    export_format = args.export
+
+    code = load_code(file_path)
+    language = get_language(file_path)
+
+    if not language:
+        print("\n❌ Unsupported file extension. Supported: .py, .js, .html, .php, .jsx, .ts, .cpp\n")
+        exit(1)
+
+    print(f"\n🔎 Scanning ({language.upper()}) file: {file_path}\n")
+    findings = scan_code(code, language)
     print_results(findings)
 
-    path = save_report(findings, args.format)
-    if path:
-        print(f"\n📄 Report saved to: {path}")
+    if export_format:
+        path = save_report(findings, export_format)
+        if path:
+            print(f"\n📁 Report saved to: {path}\n")
 
 if __name__ == "__main__":
     main()

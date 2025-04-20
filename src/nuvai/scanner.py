@@ -2,62 +2,63 @@
 File: scanner.py
 
 Description:
-This is the central scanner dispatcher in the Nuvai system. It determines the language of the source file,
-selects the appropriate scanner module, and runs security checks accordingly.
+This is the central dispatcher module for the Nuvai scanning engine.
+It is responsible for identifying the programming language of the target file
+(based on file extension), importing the appropriate scanning module,
+and running a complete analysis using that module.
 
-Supported Languages:
+It supports multiple languages:
 - Python (.py)
 - JavaScript (.js)
-- JSX (.jsx)
 - HTML (.html)
-- PHP (.php)
+- JSX (.jsx)
 - TypeScript (.ts)
+- PHP (.php)
 - C++ (.cpp)
 
-This dispatcher simplifies multi-language support for both CLI tools and future GUI integrations.
+The scanner returns structured findings which can then be saved or printed.
 """
 
 import os
 
 from .python_scanner import PythonScanner
 from .javascript_scanner import JavaScriptScanner
-from .jsx_scanner import JSXScanner
 from .html_scanner import HTMLScanner
+from .jsx_scanner import JSXScanner
 from .php_scanner import PHPScanner
-from .typescript_scanner import TypeScriptScanner
 from .cpp_scanner import CppScanner
-
+from .typescript_scanner import TypeScriptScanner
 
 def get_language(file_path):
-    ext = os.path.splitext(file_path)[-1].lower()
+    ext = os.path.splitext(file_path)[1].lower()
     return {
         ".py": "python",
         ".js": "javascript",
-        ".jsx": "jsx",
         ".html": "html",
+        ".jsx": "jsx",
         ".php": "php",
-        ".ts": "typescript",
         ".cpp": "cpp",
-    }.get(ext, "unknown")
-
+        ".ts": "typescript",
+    }.get(ext, None)
 
 def scan_code(code, language):
+    scanner = None
+
     if language == "python":
         scanner = PythonScanner(code)
     elif language == "javascript":
         scanner = JavaScriptScanner(code)
-    elif language == "jsx":
-        scanner = JSXScanner(code)
     elif language == "html":
         scanner = HTMLScanner(code)
+    elif language == "jsx":
+        scanner = JSXScanner(code)
     elif language == "php":
         scanner = PHPScanner(code)
-    elif language == "typescript":
-        scanner = TypeScriptScanner(code)
     elif language == "cpp":
         scanner = CppScanner(code)
+    elif language == "typescript":
+        scanner = TypeScriptScanner(code)
     else:
-        print("❌ Unsupported file type.")
-        return []
+        raise ValueError("Unsupported language or file extension.")
 
     return scanner.run_all_checks()
