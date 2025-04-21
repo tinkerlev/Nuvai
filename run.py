@@ -3,10 +3,10 @@
 """
 Description:
 This is the main CLI entry point for the Nuvai static code analysis engine.
-It allows users to scan a code file for vulnerabilities and export results in multiple formats.
+It allows users to scan a code file or an entire folder for vulnerabilities and export results in multiple formats.
 
 Features:
-- Accepts file path input via command line
+- Accepts file or folder path input via command line
 - Auto-detects code language by file extension or content
 - Runs static analysis using language-specific modules
 - Outputs clear terminal results and saves report to file
@@ -19,10 +19,11 @@ Suitable for technical and non-technical users.
 """
 
 import argparse
+import os
 from src.nuvai import get_language, scan_code
 from src.nuvai.report_saver import save_report
-import os
 
+SUPPORTED_EXTENSIONS = [".py", ".js", ".html", ".jsx", ".php", ".cpp", ".ts"]
 
 def load_code(file_path):
     try:
@@ -30,10 +31,14 @@ def load_code(file_path):
             return f.read()
     except Exception as e:
         print(f"❌ Failed to load file: {e}")
-        exit(1)
+        return None
 
+def print_results(file_path, findings):
+    print(f"\n📄 File: {file_path}")
+    if not findings:
+        print("✅ No issues found.")
+        return
 
-def print_results(findings):
     print("\n🔍 Security Findings:")
     for f in findings:
         print(f"\n[{f['level']}] {f['type']}")
@@ -57,7 +62,6 @@ def print_results(findings):
         for tip in sorted(unique_tips):
             print(f"- {tip}")
 
-
 def prompt_export_settings():
     print("\n💾 Export Report")
     format_choice = input("Select export format (json / txt / html / pdf): ").strip().lower()
@@ -65,28 +69,44 @@ def prompt_export_settings():
         format_choice = input("❗ Invalid format. Please choose from (json / txt / html / pdf): ").strip().lower()
     return format_choice
 
+def process_file(file_path):
+    code = load_code(file_path)
+    if not code:
+        return []
+    language = get_language(file_path, code)
+    if not language:
+        print(f"❌ Skipping unsupported file: {file_path}")
+        return []
+    findings = scan_code(code, language)
+    print_results(file_path, findings)
+    return findings
 
 def main():
     parser = argparse.ArgumentParser(description="Nuvai AI Code Security Scanner")
-    parser.add_argument("file", help="Path to the code file to scan (e.g. app.py)")
+    parser.add_argument("target", help="Path to the code file or folder to scan")
     args = parser.parse_args()
 
-    file_path = args.file
-    code = load_code(file_path)
+    all_findings = []
 
-    language = get_language(file_path, code)
-    if not language:
-        print("❌ Unable to detect the programming language of this file.")
-        exit(1)
+    if os.path.isfile(args.target):
+        findings = process_file(args.target)
+        all_findings.extend(findings)
 
-    findings = scan_code(code, language)
-    print_results(findings)
+    elif os.path.isdir(args.target):
+        for root, _, files in os.walk(args.target):
+            for fname in files:
+                if os.path.splitext(fname)[1].lower() in SUPPORTED_EXTENSIONS:
+                    full_path = os.path.join(root, fname)
+                    findings = process_file(full_path)
+                    all_findings.extend(findings)
+    else:
+        print("❌ Invalid path. Please provide a valid file or folder.")
+        return
 
     format_choice = prompt_export_settings()
-    saved = save_report(findings, format_choice)
+    saved = save_report(all_findings, format_choice)
     if saved:
         print(f"\n📁 Report saved to: {saved}")
-
 
 if __name__ == "__main__":
     main()
