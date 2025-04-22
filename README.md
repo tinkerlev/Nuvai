@@ -21,7 +21,7 @@ It’s built with:
 
 ## 🚀 Features
 - ✅ **Multi-language scanning:** Python, JavaScript, HTML, JSX, TypeScript, PHP, C++
-- ⚠️ **Detects vulnerabilities:** Code injection, XSS, SSRF, insecure deserialization, hardcoded secrets, weak crypto, etc.
+- ⚠️ **Detects vulnerabilities:** Code injection, XSS, SSRF, insecure deserialization, hardcoded secrets, weak crypto, and more
 - 📁 **Flexible reports:** JSON, TXT, HTML, and PDF
 - 🧠 **AI-Aware:** Scans AI-generated or low-code scripts for critical flaws
 - 💬 **Guided remediation tips** for every issue
@@ -33,52 +33,67 @@ It’s built with:
 ## 🗂️ Folder Structure
 ```bash
 Nuvai/
-├── assets/                  # Logos and static visuals
-├── backend/                 # Flask API for file scanning
-│   └── server.py            # Handles incoming requests
-├── config/                  # Default parameters & logging config
+├── assets/                  # Static images and branding assets (e.g., logos)
+├── backend/                 # Backend logic (Flask API and support scripts)
+│   ├── server.py            # API entry point for code scanning
+│   ├── utils.py             # Low-level helpers (e.g. pattern extractors)
+│   └── update_init.py       # Dynamically creates missing __init__.py files
+├── config/                  # (Planned) Central configuration for rules and thresholds
+├── examples/                # Example vulnerable code samples for testing
 ├── frontend/
 │   └── src/
-│       ├── api/             # Axios client & scan handler
-│       ├── components/      # FileUpload, UI blocks
-│       ├── pages/           # Home, ScanResult
-│       └── App.jsx          # Entry point
-├── examples/                # Test files with real-world vulnerabilities
-├── src/nuvai/               # Core scanning logic
-│   ├── scanner.py           # Detects language & routes scan
-│   ├── *_scanner.py         # Language-specific scanners
-│   ├── utils.py             # Regex + entropy detection
-│   ├── config.py            # Global rules, thresholds
-│   ├── report_saver.py      # Save results to disk
-│   ├── logger.py            # Secure audit-ready logging
-│   └── scanner_controller.py # Central rule executor
-├── run.py                   # CLI runner
-├── install.sh               # One-click installer for backend
+│       ├── api/             # API clients for backend communication
+│       │   ├── client.js    # Axios instance with interceptors and error handling
+│       │   └── scan.js      # Specific scan API call function
+│       ├── components/      # Reusable UI components (e.g., file upload, buttons)
+│       │   └── FileUpload.jsx
+│       ├── pages/           # Page-level React components
+│       │   ├── Home.jsx     # Main interface with file upload and scan results
+│       │   └── ScanResult.jsx # Results rendering and formatting
+│       └── App.jsx          # Root component with routing
+├── src/
+│   └── nuvai/
+│       ├── scanner.py           # Main dispatcher for language detection and routing
+│       ├── scanner_controller.py # Central orchestrator for initiating scans
+│       ├── cpp_scanner.py       # C++ vulnerability scanner
+│       ├── html_scanner.py      # HTML vulnerability scanner
+│       ├── javascript_scanner.py # JavaScript scanner
+│       ├── jsx_scanner.py       # JSX-specific rules
+│       ├── php_scanner.py       # PHP scanner
+│       ├── python_scanner.py    # Python vulnerability checks
+│       ├── typescript_scanner.py # TypeScript scanner
+│       ├── utils.py             # Security helpers (regex, entropy detection, etc.)
+│       ├── report_saver.py      # Exports results to different file types
+│       ├── config.py            # Default scanning options, thresholds, severity levels
+│       └── logger.py            # Secure logger, audit trail support
+├── run.py                   # CLI entry point for scanning a file or directory
+├── install.sh               # Shell script to install dependencies (cross-platform aware)
+├── .gitignore               # Files and folders to exclude from Git
 ├── LICENSE
 ├── README.md
-├── SECURITY.md
-└── CONTRIBUTING.md
+├── SECURITY.md              # Description of implemented security practices
+└── CONTRIBUTING.md          # Guidelines for contributors
 ```
 
 ---
 
 ## 🛠️ Getting Started
-### For Linux/Kali/Ubuntu (Recommended):
+### Linux / WSL / Kali (recommended):
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-### For Windows:
-1. Enable WSL or Git Bash
-2. Run `install.sh` using bash or manually:
+### Windows:
+1. Install WSL or use Git Bash
+2. Run:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install flask flask-cors
 ```
 
-### For macOS:
+### macOS:
 ```bash
 brew install python3
 python3 -m venv .venv
@@ -86,24 +101,7 @@ source .venv/bin/activate
 pip install flask flask-cors
 ```
 
----
-
-## 🧪 How to Scan Code
-### Run via CLI:
-```bash
-python3 run.py examples/vulnerable_app.py
-```
-Or scan a full folder:
-```bash
-python3 run.py /path/to/my-folder
-```
-
-### Run via Web UI:
-```bash
-source .venv/bin/activate
-cd backend && python3 server.py
-```
-Then open the React frontend:
+### Web UI Setup
 ```bash
 cd frontend
 npm install && npm run dev
@@ -111,49 +109,71 @@ npm install && npm run dev
 
 ---
 
-## 📄 Report Outputs
-- **JSON** – for developers, APIs, pipelines
-- **TXT** – for terminals and logs
-- **HTML** – for browsers and documentation
-- **PDF** – for clients, audits, compliance teams
+## 🧪 How to Run a Scan
+### CLI Mode:
+```bash
+python3 run.py examples/vulnerable_app.py
+```
+Scan a full folder:
+```bash
+python3 run.py /path/to/codebase
+```
+
+### Web Mode:
+```bash
+source .venv/bin/activate
+cd backend && python3 server.py
+```
+Then visit: [http://localhost:5173](http://localhost:5173)
 
 ---
 
-## 🔒 Security Practices (ISO 27001 Alignment)
-- 🔹 Encrypted communication support (future-ready)
-- 🔹 Input validation + output encoding
-- 🔹 Secure file handling + cleanup
-- 🔹 No raw error exposure to end-users
-- 🔹 Activity logging for audit traceability
+## 📄 Report Formats
+- `.json` — for APIs and automation
+- `.html` — for browsers and documentation
+- `.pdf` — for audits and clients
+- `.txt` — for logs and fast review
+
+Reports saved to: `~/security_reports/`
 
 ---
 
-## 🎯 Roadmap Highlights
-- [x] Multi-language support
-- [x] Smart report export
-- [x] Modern UI
-- [ ] OAuth2 Authentication (Coming Soon)
-- [ ] Docker Deployment
-- [ ] CI/CD Auto Scanning Plugin
-- [ ] Plugin System for Rules
+## 🔒 Built with Security in Mind (ISO/IEC 27001)
+- ✔ Input validation + output encoding
+- ✔ Temporary files are deleted after scan
+- ✔ No user secrets or logs exposed
+- ✔ Modular logging for audit readiness
+- ✔ Supports offline and privacy-respecting usage
 
 ---
 
-## 🧑‍💻 Contribute
-Want to help us? Fork the repo and check [`CONTRIBUTING.md`](./CONTRIBUTING.md) for how to:
-- Add scanners
-- Suggest new rules
-- Help improve UX or onboarding
+## 📍 Roadmap
+- [x] Static engine with 7+ language scanners
+- [x] Advanced PDF/HTML/JSON export
+- [x] React frontend
+- [ ] OAuth2 Login support (frontend/backend)
+- [ ] Docker build + CI pipeline
+- [ ] Plugin SDK for adding new rules
+- [ ] Support SARIF/OWASP ZAP exports
 
 ---
 
-## 👨‍🏫 Creator
+## 🤝 Contribute
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for full instructions.
+You can:
+- Write rules and scanners
+- Improve documentation or UI
+- Report bugs and ideas
+
+---
+
+## 👨‍💻 Created by
 **Eliran Loai Deeb**  
-LinkedIn: [linkedin.com/in/loai-deeb](https://www.linkedin.com/in/loai-deeb)  
-GitHub: [@tinkerlev](https://github.com/tinkerlev)
+GitHub: [@tinkerlev](https://github.com/tinkerlev)  
+LinkedIn: [linkedin.com/in/loai-deeb](https://www.linkedin.com/in/loai-deeb)
 
 ---
 
-> Built with ❤️ for builders, hackers, educators and code reviewers.
+> Built with ❤️ for builders, red teamers, and ethical coders.
 
-Stay tuned. Stay secure. 🛡️
+Stay secure. Stay smart. 🛡️
