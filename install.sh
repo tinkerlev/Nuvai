@@ -48,3 +48,7 @@ echo "🎉 Nuvai backend is ready!"
 echo "👉 To run the server:"
 echo "   source .venv/bin/activate && cd backend && python3 server.py"
 echo ""
+
+
+# pip install backend
+pip install -r backend/requirements.txt
