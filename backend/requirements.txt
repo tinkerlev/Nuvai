@@ -1,23 +1,4 @@
 # requirements.txt
 
-"""
-This file lists the Python dependencies required to run the Nuvai backend.
-It allows users to set up the project quickly and consistently across different systems (Linux, Windows, macOS).
-
-🛠️ How to install:
-Run the following command from the project root (with your virtual environment activated):
-
-    pip install -r backend/requirements.txt
-
-📦 What's included:
-- flask: The lightweight web framework powering Nuvai's backend API (used to receive uploaded code files and return scan results).
-- flask-cors: Enables secure communication between the React frontend and Flask backend (prevents CORS-related issues).
-
-🛡️ Security:
-- Uses pinned versions to ensure compatibility and reduce risk of introducing vulnerabilities via updates.
-- Compatible with secure development practices (ISO/IEC 27001 alignment).
-- Supports export features: HTML, TXT, PDF (requires additional optional tools like `fpdf`, handled separately).
-"""
-
 flask==3.1.0
-flask-cors==3.1.0
+flask-cors==3.0.10

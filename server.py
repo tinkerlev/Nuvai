@@ -7,19 +7,41 @@ It receives a code file via HTTP POST (from the React frontend), determines the 
 passes the code to the appropriate scanner, and returns the list of security findings as JSON.
 
 The file upload is handled via the "/scan" route, and a temporary directory is used to store incoming files.
-This backend is designed to be cross-platform, lightweight, and easy to integrate with various frontends.
+
+🚀 Features:
+- Accepts secure file uploads from frontend
+- Automatically detects code language
+- Integrates with Nuvai static analysis
+- Returns structured JSON response
+- Deletes file after scan
+- Supports CORS and .env configuration
+- Enforces max file size from environment
+
 """
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
 import os
+
 from src.nuvai import get_language, scan_code
 
-app = Flask(__name__)
-CORS(app)  # Enable cross-origin requests from React frontend
+# Load environment variables
+load_dotenv()
 
+# Constants
 UPLOAD_FOLDER = "temp_uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Ensure the folder exists
+API_PORT = int(os.getenv("API_PORT", 5000))
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
+MAX_FILE_SIZE = int(os.getenv("MAX_FILE_SIZE", 1048576))  # Default: 1MB
+
+# Prepare environment
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# App setup
+app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
+CORS(app, origins=ALLOWED_ORIGINS.split(","))
 
 @app.route("/scan", methods=["POST"])
 def scan_file():
@@ -49,4 +71,4 @@ def scan_file():
             os.remove(file_path)  # Clean up uploaded file after scanning
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)  # Run development server on port 5000
+    app.run(debug=True, port=API_PORT)

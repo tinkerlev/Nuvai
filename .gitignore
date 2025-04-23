@@ -39,3 +39,6 @@ pip-wheel-metadata/
 build/
 dist/
 *.egg
+
+# Errors reports
+.env
