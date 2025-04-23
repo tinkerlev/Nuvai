@@ -2,19 +2,22 @@
 
 /**
  * Description:
- * A secure, ISO/IEC 27001-aligned global Error Boundary for the Nuvai React app.
- * Prevents app crashes, protects internal state, and presents clear fallback UI for non-technical users.
+ * A robust, ISO/IEC 27001-aligned global Error Boundary for the Nuvai React app.
+ * It catches rendering errors, protects the UI from crashing, logs the issue,
+ * and shows a clear, friendly message with recovery options.
  *
  * Security & UX Enhancements:
- * - Catches React rendering errors across app components
- * - Logs structured metadata (timestamp, user agent, error stack)
- * - Future support for external logging (e.g. Sentry, custom API)
- * - Offers accessible, user-friendly fallback with ARIA roles
- * - Contains a collapsible technical error trace for developers
+ * - Differentiates between dev/prod environments
+ * - Logs structured diagnostics (timestamp, user agent, component stack)
+ * - Assigns a unique error ID (UUID) for traceability
+ * - Safe error fallback UI with ARIA accessibility and developer stack trace
+ * - Local storage for post-crash diagnostics
+ * - Ready for backend error logging or Sentry integration
  */
 
 import React from "react";
 import PropTypes from "prop-types";
+import { v4 as uuidv4 } from "uuid";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -23,6 +26,7 @@ class ErrorBoundary extends React.Component {
       hasError: false,
       errorSummary: null,
       errorInfo: null,
+      errorId: uuidv4(),
     };
   }
 
@@ -34,24 +38,36 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    this.setState({ errorInfo: info });
-
-    const logPayload = {
-      type: "frontend_error",
-      error: error?.message || "Unknown",
-      stack: info?.componentStack || "Unavailable",
-      time: new Date().toISOString(),
+    const payload = {
+      type: "frontend_render_error",
+      id: this.state.errorId,
+      error: error?.message || "Unknown error",
+      stack: info?.componentStack || "No component stack",
+      timestamp: new Date().toISOString(),
       userAgent: navigator?.userAgent,
+      path: window.location.pathname,
     };
 
-    console.error("📉 ErrorBoundary Log:", logPayload);
+    console.error("📉 Nuvai ErrorBoundary Log:", payload);
 
-    // Optional: Send to external logger
-    // fetch("/api/log-error", {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify(logPayload),
-    // });
+    // Store locally for potential export/logging
+    localStorage.setItem("nuvai_last_error", JSON.stringify(payload));
+
+    // 🔒 Optional: Send to backend or bug tracking
+    const isDev = import.meta.env.MODE === "development";
+    const endpoint = import.meta.env.VITE_ERROR_ENDPOINT || null;
+
+    if (!isDev && endpoint) {
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).then(() => {
+        console.info("📤 Error report sent to server.");
+      }).catch((err) => {
+        console.warn("⚠️ Failed to send error report:", err);
+      });
+    }
   }
 
   handleRecover = () => {
@@ -63,25 +79,28 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div
-          className="bg-red-50 text-red-700 border border-red-300 rounded-lg p-6 mt-12 max-w-xl mx-auto text-center shadow"
+          className="bg-red-50 text-red-800 border border-red-300 rounded-xl p-6 mt-12 max-w-xl mx-auto text-center shadow-lg"
           role="alert"
           aria-live="assertive"
         >
-          <h2 className="text-xl font-bold mb-2">⚠️ Something went wrong</h2>
+          <h2 className="text-xl font-bold mb-2">⚠️ Unexpected Error</h2>
           <p className="text-sm mb-2">
-            An unexpected error occurred. Please refresh the page or return to the homepage.
+            Something went wrong. Our system has recorded the issue to help improve Nuvai’s stability.
+          </p>
+          <p className="text-xs text-slate-500">
+            Error ID: <code>{this.state.errorId}</code>
           </p>
           <button
             onClick={this.handleRecover}
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
           >
-            🔁 Go to Homepage
+            🔁 Return to Homepage
           </button>
 
-          {this.state.errorInfo && (
+          {import.meta.env.MODE === "development" && this.state.errorInfo && (
             <details className="mt-4 text-left text-xs text-slate-600 whitespace-pre-wrap max-h-48 overflow-y-auto">
               <summary className="cursor-pointer text-slate-500">
-                Technical Details
+                Developer Stack Trace
               </summary>
               {this.state.errorInfo.componentStack}
             </details>
