@@ -2,11 +2,13 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # Virtual environments
 .venv/
 venv/
 env/
+.env
 
 # Logs and local output
 *.log
@@ -39,6 +41,4 @@ pip-wheel-metadata/
 build/
 dist/
 *.egg
-
-# Errors reports
-.env
+.vscode/

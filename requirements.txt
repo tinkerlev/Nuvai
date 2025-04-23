@@ -1,0 +1,9 @@
+# requirements.txt
+
+flask==3.0.0
+flask-cors==3.0.10
+python-dotenv==1.0.1
+
+# Testing
+pytest==8.1.1
+pytest-cov==5.0.0

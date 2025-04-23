@@ -3,14 +3,14 @@ version: "3.8"
 services:
   backend:
     build:
-      context: ./backend
+      context: .
     container_name: nuvai-backend
     ports:
       - "5000:5000"
     env_file:
       - .env
     volumes:
-      - ./backend:/app
+      - .:/app
     restart: unless-stopped
 
   frontend:

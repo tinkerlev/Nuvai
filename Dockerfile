@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 5000
 
 # Start the backend
-CMD ["python", "./server.py"]
+CMD ["python", "server.py"]
