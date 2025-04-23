@@ -1,6 +1,7 @@
 # README.md
 
 ## 🔐 Welcome to Nuvai – AI-Powered Secure Code Scanner
+![CI Status](https://github.com/tinkerlev/nuvai/actions/workflows/ci.yml/badge.svg)
 
 **Where AI meets precision, with the rigor of real-world penetration testing.**
 
@@ -30,50 +31,69 @@ It’s built with:
 
 ---
 
+## ✅ Continuous Integration (CI)
+
+Every change is automatically tested with GitHub Actions:
+
+- 🧪 **Backend tests** with `pytest`
+- ⚛️ **Frontend tests** with `vitest` and React Testing Library
+
+You can view test results directly on each pull request.
+
 ## 🗂️ Folder Structure
-```bash
+
 Nuvai/
-├── assets/                  # Static images and branding assets (e.g., logos)
-├── backend/                 # Backend logic (Flask API and support scripts)
-│   ├── server.py            # API entry point for code scanning
-│   ├── utils.py             # Low-level helpers (e.g. pattern extractors)
-│   └── update_init.py       # Dynamically creates missing __init__.py files
-├── config/                  # (Planned) Central configuration for rules and thresholds
-├── examples/                # Example vulnerable code samples for testing
-├── frontend/
-│   └── src/
-│       ├── api/             # API clients for backend communication
-│       │   ├── client.js    # Axios instance with interceptors and error handling
-│       │   └── scan.js      # Specific scan API call function
-│       ├── components/      # Reusable UI components (e.g., file upload, buttons)
-│       │   └── FileUpload.jsx
-│       ├── pages/           # Page-level React components
-│       │   ├── Home.jsx     # Main interface with file upload and scan results
-│       │   └── ScanResult.jsx # Results rendering and formatting
-│       └── App.jsx          # Root component with routing
-├── src/
-│   └── nuvai/
-│       ├── scanner.py           # Main dispatcher for language detection and routing
-│       ├── scanner_controller.py # Central orchestrator for initiating scans
-│       ├── cpp_scanner.py       # C++ vulnerability scanner
-│       ├── html_scanner.py      # HTML vulnerability scanner
-│       ├── javascript_scanner.py # JavaScript scanner
-│       ├── jsx_scanner.py       # JSX-specific rules
-│       ├── php_scanner.py       # PHP scanner
-│       ├── python_scanner.py    # Python vulnerability checks
-│       ├── typescript_scanner.py # TypeScript scanner
-│       ├── utils.py             # Security helpers (regex, entropy detection, etc.)
-│       ├── report_saver.py      # Exports results to different file types
-│       ├── config.py            # Default scanning options, thresholds, severity levels
-│       └── logger.py            # Secure logger, audit trail support
-├── run.py                   # CLI entry point for scanning a file or directory
-├── install.sh               # Shell script to install dependencies (cross-platform aware)
-├── .gitignore               # Files and folders to exclude from Git
-├── LICENSE
+├── assets/                        # Static images and branding assets
+├── backend/                       # Flask backend for the API
+│   ├── server.py                  # Entry point for Flask API
+│   ├── utils.py                   # Low-level helpers (e.g. extractors)
+│   ├── update_init.py             # Auto-generation for missing __init__.py files
+│   ├── scanner_controller.py      # Scan orchestration logic
+│   └── tests/                     # Backend tests
+│       ├── test_scan.py           # Valid file scan test
+│       └── test_scan_empty_file.py # Empty, unsupported, insecure file tests
+├── config/                        # (Planned) Centralized configuration
+├── examples/                      # Sample vulnerable code snippets
+├── frontend/                      # React-based frontend
+│   ├── src/                       # Source code directory
+│   │   ├── App.jsx                # Main App component
+│   │   ├── index.css              # Global styles
+│   │   ├── main.jsx               # Entry point for React DOM rendering
+│   │   ├── api/                   # API client logic
+│   │   │   ├── client.js          # Axios instance with defaults
+│   │   │   └── scan.js            # Scan API call definition
+│   │   ├── components/            # Reusable React components
+│   │   │   └── FileUpload.jsx     # File upload handler UI
+│   │   └── pages/                 # React page-level components
+│   │       ├── Home.jsx           # Home page view
+│   │       └── ScanResult.jsx     # Scan results renderer
+│   └── __tests__/                 # Frontend test suite (Vitest)
+│       └── App.test.jsx           # UI-level test for App component
+├── src/                           # Core scanner engine
+│   └── nuvai/                     # Language-specific scanners and utils
+│       ├── scanner.py             # Main scan dispatcher
+│       ├── scanner_controller.py  # Scan flow orchestrator
+│       ├── cpp_scanner.py         # C++ analysis rules
+│       ├── html_scanner.py        # HTML analysis rules
+│       ├── javascript_scanner.py  # JS analysis rules
+│       ├── jsx_scanner.py         # JSX rules
+│       ├── php_scanner.py         # PHP rules
+│       ├── python_scanner.py      # Python security checks
+│       ├── typescript_scanner.py  # TypeScript rules
+│       ├── utils.py               # Regex, entropy check, etc.
+│       ├── report_saver.py        # Formats output as PDF/HTML/TXT
+│       ├── config.py              # Severity and rule settings
+│       └── logger.py              # Audit trail and log manager
+├── run.py                         # CLI interface
+├── install.sh                     # Installer script (cross-platform)
+├── requirements.txt               # Python dependencies
+├── docker-compose.yml             # Docker orchestration
+├── Dockerfile                     # Backend Docker config
 ├── README.md
-├── SECURITY.md              # Description of implemented security practices
-└── CONTRIBUTING.md          # Guidelines for contributors
-```
+├── SECURITY.md                    # Security best practices
+├── CONTRIBUTING.md                # Contribution guide
+└── .gitignore                     # Git exclusions
+
 
 ---
 
