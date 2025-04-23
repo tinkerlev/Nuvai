@@ -1,0 +1,46 @@
+<!-- File: public/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="Nuvai – AI-powered code vulnerability scanner" />
+    <meta name="theme-color" content="#1e40af" />
+    <meta name="keywords" content="cybersecurity, vulnerability scanner, AI, secure development" />
+    <meta name="author" content="Eliran Loai Deeb" />
+
+    <title>Nuvai | Secure Code Scanner</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.ico" />
+
+    <!-- Manifest (for PWA support in the future) -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- SEO & Social -->
+    <meta property="og:title" content="Nuvai – Secure AI Code Scanner" />
+    <meta property="og:description" content="Scan your code for vulnerabilities using AI-enhanced static analysis." />
+    <meta property="og:image" content="/nuvai_banner.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://github.com/tinkerlev/Nuvai" />
+
+    <!-- CSP (Content Security Policy) – only for production! -->
+    <!--
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline';"
+    />
+    -->
+
+    <!-- Tailwind + Framer will be bundled by Vite -->
+  </head>
+
+  <body class="bg-slate-100 text-slate-800 antialiased">
+    <noscript>
+      <strong>We're sorry but Nuvai requires JavaScript to work properly.</strong>
+    </noscript>
+    <div id="root"></div>
+  </body>
+</html>
