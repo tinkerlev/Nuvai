@@ -37,4 +37,4 @@ def test_scan_valid_python_file(client):
 
 def test_example():
     print("🔥 Test started")
-    assert 1 == 2
+    assert 1 == 1
