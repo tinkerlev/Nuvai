@@ -41,7 +41,7 @@ Every change is automatically tested with GitHub Actions:
 You can view test results directly on each pull request.
 
 ## 🗂️ Folder Structure
-
+```bash
 Nuvai/
 ├── assets/                        # Static images and branding assets
 ├── backend/                       # Flask backend for the API
@@ -93,7 +93,7 @@ Nuvai/
 ├── SECURITY.md                    # Security best practices
 ├── CONTRIBUTING.md                # Contribution guide
 └── .gitignore                     # Git exclusions
-
+```
 
 ---
 
