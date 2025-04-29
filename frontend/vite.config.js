@@ -6,6 +6,6 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom' // 👈 חובה לטעינת document/window
+    environment: 'jsdom' 
   }
 })

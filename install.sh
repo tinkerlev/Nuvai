@@ -1,3 +1,4 @@
+# install.sh
 #!/bin/bash
 
 echo ""
@@ -5,7 +6,7 @@ echo "🚀 Starting Nuvai backend setup..."
 echo ""
 
 # Step 1: Check Python3
-if ! command -v python3 &> /dev/null; then
+if [ ! -x "$(which python3)" ]; then
     echo "❌ Python3 is not installed. Please install Python 3.x before continuing."
     exit 1
 fi
@@ -32,12 +33,12 @@ if ! pip install --upgrade pip; then
     pip install --upgrade pip --break-system-packages || echo "⚠️ Continuing anyway..."
 fi
 
-# Step 5: Install dependencies with fallback
-echo "📥 Installing Flask and Flask-CORS..."
-if ! pip install flask flask-cors; then
+# Step 5: Install all project dependencies from requirements.txt
+echo "📥 Installing all dependencies from requirements.txt..."
+if ! pip install -r requirements.txt; then
     echo "⚠️ pip install failed – trying with --break-system-packages..."
-    pip install flask flask-cors --break-system-packages || {
-        echo "❌ Failed to install required packages. Try manually or use pipx."
+    pip install -r requirements.txt --break-system-packages || {
+        echo "❌ Failed to install required packages. Please check pip version and permissions."
         exit 1
     }
 fi
@@ -46,9 +47,5 @@ fi
 echo ""
 echo "🎉 Nuvai backend is ready!"
 echo "👉 To run the server:"
-echo "   source .venv/bin/activate && cd backend && python3 server.py"
+echo "   source .venv/bin/activate && flask --app server run"
 echo ""
-
-
-# pip install backend
-pip install -r backend/requirements.txt

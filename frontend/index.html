@@ -1,13 +1,226 @@
-<!doctype html>
+<!-- updated index.html with valid response check and detailed vulnerability rendering -->
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Nuvai – AI-powered Code Scanner" />
+  <title>Nuvai – Code Scanner</title>
+  <style>
+    body {
+      background: #f9fafb;
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    input[type="file"] {
+      margin-bottom: 10px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-size: 1rem;
+    }
+    button:hover {
+      background: #1e40af;
+    }
+    #resultsContainer {
+      margin-top: 30px;
+      text-align: left;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .file-result {
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 5px;
+      background: #2563eb;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+    .critical { border-left: 5px solid #dc2626; background: #fee2e2; }
+    .high     { border-left: 5px solid #f43f5e; background: #ffe4e6; }
+    .medium   { border-left: 5px solid #f59e0b; background: #fef3c7; }
+    .low      { border-left: 5px solid #84cc16; background: #ecfccb; }
+    .info     { border-left: 5px solid #0ea5e9; background: #e0f2fe; }
+    .tip      { border-left: 5px solid #8b5cf6; background: #ede9fe; }
+    ul { margin-top: 10px; }
+    li { margin-left: 20px; }
+    #statusMessage {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    #formatSelector {
+      margin-top: 20px;
+      display: none;
+    }
+    select {
+      padding: 8px;
+      font-size: 1rem;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔎 Nuvai Code Scanner</h1>
+
+  <form id="uploadForm">
+    <input type="file" id="fileInput" multiple required />
+    <br />
+    <button type="submit">Scan Files</button>
+  </form>
+
+  <div id="resultsContainer"></div>
+  <div id="statusMessage"></div>
+
+  <div id="formatSelector">
+    <label for="format">💾 Save as:</label>
+    <select id="format">
+      <option value="html">HTML</option>
+      <option value="txt">TXT</option>
+      <option value="pdf">PDF</option>
+      <option value="js">JavaScript</option>
+    </select>
+    <button onclick="exportResults()">Export</button>
+  </div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    const fileInput = document.getElementById("fileInput");
+    const resultsContainer = document.getElementById("resultsContainer");
+    const statusMessage = document.getElementById("statusMessage");
+    const formatSelector = document.getElementById("formatSelector");
+
+    let allResults = [];
+    let fetchErrors = 0;
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resultsContainer.innerHTML = "";
+      statusMessage.innerHTML = "";
+      formatSelector.style.display = "none";
+      allResults = [];
+      fetchErrors = 0;
+
+      const files = fileInput.files;
+      if (!files.length) return;
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const resultBox = document.createElement("div");
+        resultBox.classList.add("file-result");
+        resultBox.innerHTML = `<strong>${file.name}</strong> – scanning...`;
+
+        const progressBar = document.createElement("div");
+        progressBar.classList.add("progress-bar");
+        resultBox.appendChild(progressBar);
+        resultsContainer.appendChild(resultBox);
+
+        progressBar.style.width = "30%";
+
+        try {
+          const res = await fetch("http://localhost:5000/scan", {
+            method: "POST",
+            body: formData,
+          });
+
+          progressBar.style.width = "100%";
+          const data = await res.json();
+
+          if (!data || typeof data !== 'object') {
+            throw new Error("Invalid response format");
+          }
+
+          allResults.push({ file: file.name, scan: data });
+
+          if (Array.isArray(data.vulnerabilities) && data.vulnerabilities.length > 0) {
+            const maxSeverity = data.vulnerabilities.some(v => v.severity === "critical") ? "critical"
+                                  : data.vulnerabilities.some(v => v.severity === "high") ? "high"
+                                  : data.vulnerabilities.some(v => v.severity === "medium") ? "medium"
+                                  : data.vulnerabilities.some(v => v.severity === "low") ? "low"
+                                  : data.vulnerabilities.some(v => v.severity === "info") ? "info"
+                                  : "tip";
+            resultBox.classList.add(maxSeverity);
+            resultBox.innerHTML = `<strong>📄 File: ${file.name}</strong><br/><span>🔍 Scan completed. Found ${data.vulnerabilities.length} issues:</span>`;
+            const ul = document.createElement("ul");
+            data.vulnerabilities.forEach(vuln => {
+              const li = document.createElement("li");
+              li.innerHTML = `
+                <div><strong>[${vuln.severity.toUpperCase()}]</strong> – ${vuln.title || "Untitled finding"}</div>
+                <div>📝 <em>Description:</em> ${vuln.description}</div>
+                <div>🛠️ <em>Recommendation:</em> ${vuln.recommendation}</div>
+              `;
+              ul.appendChild(li);
+            });
+            resultBox.appendChild(ul);
+          } else {
+            resultBox.classList.add("safe");
+            resultBox.innerHTML = `<strong>${file.name}</strong>: ✅ Safe`;
+          }
+        } catch (err) {
+          fetchErrors++;
+          progressBar.style.width = "100%";
+          resultBox.classList.add("critical");
+          resultBox.innerHTML = `
+            <strong>📄 File: ${file.name}</strong><br/>
+            <span>❌ <strong>Scan failed</strong></span>
+            <ul style="margin-top: 10px;">
+              <li>📌 Reason: ${err.message || "Unknown error while processing this file."}</li>
+              <li>📎 Recommendation: Ensure the file is supported and valid text/code.</li>
+            </ul>
+          `;
+        }
+      }
+
+      let hasCritical = false;
+      let hasVulnerabilities = false;
+
+      allResults.forEach(result => {
+        const vulns = Array.isArray(result.scan?.vulnerabilities) ? result.scan.vulnerabilities : [];
+        if (vulns.length > 0) {
+          hasVulnerabilities = true;
+          if (vulns.some(v => v.severity === "critical")) {
+            hasCritical = true;
+          }
+        }
+      });
+
+      if (fetchErrors === files.length) {
+        statusMessage.innerHTML = "❌ All files scanned failed.";
+      } else if (fetchErrors > 0) {
+        statusMessage.innerHTML = `⚠️ Some files failed to scan (${fetchErrors} of ${files.length})`;
+      } else if (hasCritical) {
+        statusMessage.innerHTML = "⚠️ <span style='color:#b91c1c'>Critical vulnerabilities found!</span>";
+      } else if (hasVulnerabilities) {
+        statusMessage.innerHTML = "🟠 Some issues found (no critical)";
+      } else {
+        statusMessage.innerHTML = "✅ All files scanned safely 🎉";
+      }
+
+      formatSelector.style.display = "block";
+    });
+  </script>
+</body>
 </html>

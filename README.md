@@ -45,7 +45,6 @@ You can view test results directly on each pull request.
 Nuvai/
 ├── assets/                        # Static images and branding assets
 ├── backend/                       # Flask backend for the API
-│   ├── server.py                  # Entry point for Flask API
 │   ├── utils.py                   # Low-level helpers (e.g. extractors)
 │   ├── update_init.py             # Auto-generation for missing __init__.py files
 │   ├── scanner_controller.py      # Scan orchestration logic
@@ -85,6 +84,7 @@ Nuvai/
 │       ├── config.py              # Severity and rule settings
 │       └── logger.py              # Audit trail and log manager
 ├── run.py                         # CLI interface
+├── server.py                      # Entry point for Flask API
 ├── install.sh                     # Installer script (cross-platform)
 ├── requirements.txt               # Python dependencies
 ├── docker-compose.yml             # Docker orchestration
