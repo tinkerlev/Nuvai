@@ -15,3 +15,6 @@ gunicorn==21.2.0
 # Build and Packaging utilities (safe installation)
 setuptools>=68.0.0
 wheel>=0.42.0
+
+# AI Support
+openai>=1.14.3
