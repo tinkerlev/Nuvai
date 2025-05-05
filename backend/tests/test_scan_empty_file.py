@@ -1,8 +1,4 @@
-# file= 'test_scan_empty_file.py'
-
-
-
-
+# file: test_scan_empty_file.py
 
 import os
 import tempfile
@@ -31,11 +27,12 @@ def test_scan_valid_python_file(client):
         print("Response JSON:", response.json)
 
         assert response.status_code == 200
-        assert isinstance(response.json, list)
 
-    except Exception as e:
-        print("🔥 Test failed with exception:", e)
-        raise
+        response_data = response.json
+        assert isinstance(response_data, dict)
+        assert "vulnerabilities" in response_data
+        assert isinstance(response_data["vulnerabilities"], list)
+        assert len(response_data["vulnerabilities"]) > 0
 
     finally:
         if os.path.exists(filepath):
@@ -51,8 +48,13 @@ def test_scan_empty_file(client):
             response = client.post("/scan", content_type="multipart/form-data", data=data)
 
         print("🧪 Empty file response:", response.json)
+
+        response_data = response.json
         assert response.status_code == 200
-        assert isinstance(response.json, list)
+        assert isinstance(response_data, dict)
+        assert "vulnerabilities" in response_data
+        assert isinstance(response_data["vulnerabilities"], list)
+        assert len(response_data["vulnerabilities"]) > 0
 
     finally:
         if os.path.exists(filepath):
@@ -69,8 +71,13 @@ def test_scan_unsupported_file(client):
             response = client.post("/scan", content_type="multipart/form-data", data=data)
 
         print("🧪 Unsupported file response:", response.json)
+
+        response_data = response.json
         assert response.status_code == 200
-        assert isinstance(response.json, list)
+        assert isinstance(response_data, dict)
+        assert "vulnerabilities" in response_data
+        assert isinstance(response_data["vulnerabilities"], list)
+        assert len(response_data["vulnerabilities"]) > 0
 
     finally:
         if os.path.exists(filepath):
@@ -88,9 +95,17 @@ def test_scan_insecure_python_code(client):
             response = client.post("/scan", content_type="multipart/form-data", data=data)
 
         print("🛡️ Insecure code response:", response.json)
+
+        response_data = response.json
         assert response.status_code == 200
-        assert isinstance(response.json, list)
-        assert any("eval" in (entry.get("message", "") + entry.get("recommendation", "")).lower() for entry in response.json)
+        assert isinstance(response_data, dict)
+        assert "vulnerabilities" in response_data
+        assert isinstance(response_data["vulnerabilities"], list)
+        assert len(response_data["vulnerabilities"]) > 0
+
+        # Check for detection of "eval" usage
+        vulns = response_data["vulnerabilities"]
+        assert any("eval" in ((v.get("title", "") + v.get("description", "") + v.get("recommendation", "")).lower()) for v in vulns)
 
     finally:
         if os.path.exists(filepath):
