@@ -1,3 +1,5 @@
+# file: backend/tests/test_scan.py
+
 import os
 import tempfile
 import pytest
@@ -11,11 +13,11 @@ def client():
 
 def test_scan_valid_python_file(client):
     code = "def hello():\n    print('Hello')"
-    
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode="w") as f:
         f.write(code)
-        filepath = f.name  
-    
+        filepath = f.name
+
     try:
         with open(filepath, "rb") as file:
             data = {"file": (file, "hello.py")}
@@ -25,11 +27,12 @@ def test_scan_valid_python_file(client):
         print("Response JSON:", response.json)
 
         assert response.status_code == 200
-        assert isinstance(response.json, list)
 
-    except Exception as e:
-        print("🔥 Test failed with exception:", e)
-        raise
+        response_data = response.json
+        assert isinstance(response_data, dict)
+        assert "vulnerabilities" in response_data
+        assert isinstance(response_data["vulnerabilities"], list)
+        assert len(response_data["vulnerabilities"]) > 0
 
     finally:
         if os.path.exists(filepath):
