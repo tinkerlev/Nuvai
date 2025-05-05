@@ -1,3 +1,4 @@
+
 import openai
 from openai import OpenAI
 import os
@@ -8,7 +9,7 @@ client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
 )
 
-DEFAULT_MODEL ="gpt-4o-2024-08-06" # "gpt-3.5-turbo"  # Changed from "gpt-4"
+DEFAULT_MODEL ="gpt-4o-2024-08-06"
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_MAX_TOKENS = 1000
 
