@@ -1,4 +1,6 @@
-# Contributing to Nuvai
+# 🛠️ Contributing to Nuvai
+
+🗓️ Version: 1.0 | Last updated: May 2025 | Status: Early-stage (Alpha)
 
 Thank you for your interest in contributing to **Nuvai**!
 
@@ -17,6 +19,7 @@ Repository: [github.com/tinkerlev/Nuvai](https://github.com/tinkerlev/Nuvai)
 
 1. **Fork** this repository.
 2. **Clone** your fork to your local machine:
+
    ```bash
    git clone https://github.com/your-username/Nuvai.git
    cd Nuvai
@@ -28,16 +31,26 @@ For detailed setup instructions, please refer to the [README.md](./README.md).
 
 ---
 
+## 📌 Areas We're Actively Looking for Help With
+
+* Language detection logic (multi-language support)
+* New scanning rules (especially OWASP Top 10)
+* CLI usability feedback
+* Docker setup and deployment scripts
+* Frontend UI testing (React + Tailwind)
+
+---
+
 ## 🛠️ How You Can Contribute
 
 We welcome all types of contributions, including but not limited to:
 
-- **Testing the CLI:** Run Nuvai on real-world or AI-generated code and share feedback.
-- **Reporting Bugs:** Found a bug? Open an Issue with clear reproduction steps.
-- **Suggesting Improvements:** Have an idea? Propose it through an Issue.
-- **Submitting Code Enhancements:** Open a Pull Request (PR) with your improvements.
-- **Improving Documentation:** Help us make Nuvai even easier to use and understand.
-- **Sharing Ideas:** Creative suggestions are highly encouraged!
+* **Testing the CLI:** Run Nuvai on real-world or AI-generated code and share feedback.
+* **Reporting Bugs:** Found a bug? Open an Issue with clear reproduction steps.
+* **Suggesting Improvements:** Have an idea? Propose it through an Issue.
+* **Submitting Code Enhancements:** Open a Pull Request (PR) with your improvements.
+* **Improving Documentation:** Help us make Nuvai even easier to use and understand.
+* **Sharing Ideas:** Creative suggestions are highly encouraged!
 
 If you're new to open source, don't worry — we’re happy to guide you.
 
@@ -45,19 +58,23 @@ If you're new to open source, don't worry — we’re happy to guide you.
 
 ## 📋 Contribution Guidelines
 
-- Create a separate branch for each contribution.
+* Create a separate branch for each contribution.
+
   ```bash
   git checkout -b feature/your-feature-name
   ```
-- Write clear and descriptive commit messages.
-- Keep your code clean and well-documented.
-- Wherever possible, add tests to validate your changes.
-- Be respectful and collaborate openly — we’re building this together.
+* Write clear and descriptive commit messages.
+* Keep your code clean and well-documented.
+* Wherever possible, add tests to validate your changes.
+* Be respectful and collaborate openly — we’re building this together.
 
 Before submitting a Pull Request, please make sure:
-- Your code runs without errors.
-- It follows basic formatting and code style.
-- Any related Issues are referenced (e.g., `Closes #123`).
+
+* Your code runs without errors.
+* It follows basic formatting and code style.
+* Any related Issues are referenced (e.g., `Closes #123`).
+
+> If you're reporting a security issue, please follow our [Security Policy](./SECURITY.md) instead of creating a public issue.
 
 ---
 
@@ -66,10 +83,10 @@ Before submitting a Pull Request, please make sure:
 At this early stage, testing the **Command Line Interface (CLI)** is especially valuable.
 You can help by:
 
-- Running scans on your own codebases (or sample projects).
-- Checking how Nuvai handles AI-generated or No-Code output.
-- Trying different programming languages: Python, JavaScript, PHP, HTML, TypeScript, C++, and more.
-- Noting any false positives, missed vulnerabilities, crashes, or unclear messages.
+* Running scans on your own codebases (or sample projects).
+* Checking how Nuvai handles AI-generated or No-Code output.
+* Trying different programming languages: Python, JavaScript, PHP, HTML, TypeScript, C++, and more.
+* Noting any false positives, missed vulnerabilities, crashes, or unclear messages.
 
 Even basic feedback like "it worked" or "it failed with this error" is extremely helpful.
 
@@ -82,9 +99,9 @@ We are shaping Nuvai together — your input matters!
 Please be kind, constructive, and respectful toward others.
 By participating, you agree to:
 
-- Maintain a respectful and welcoming environment for everyone.
-- Give constructive feedback.
-- Collaborate in a spirit of openness and positivity.
+* Maintain a respectful and welcoming environment for everyone.
+* Give constructive feedback.
+* Collaborate in a spirit of openness and positivity.
 
 You are always welcome to reach out privately if you have any questions or concerns.
 
@@ -96,9 +113,11 @@ For more details, please refer to our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 If you have any questions, feel free to:
 
-- Open an Issue
-- Start a Discussion on GitHub
-- Or **contact me privately — you are always welcome!**
+* Open an Issue
+* Start a Discussion on GitHub
+* Or **contact me privately — you are always welcome!**
+
+Whether it’s a bug fix, a typo, or a new feature — you’re helping build a more secure world.
 
 We’re excited to build something amazing together.
 Thank you for being part of the Nuvai journey! ❤️
