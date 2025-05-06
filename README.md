@@ -191,6 +191,7 @@ You can:
 **Eliran Loai Deeb**  
 GitHub: [@tinkerlev](https://github.com/tinkerlev)  
 LinkedIn: [linkedin.com/in/loai-deeb](https://www.linkedin.com/in/loai-deeb)
+Want to support or collaborate? See [SPONSORSHIP.md](./SPONSORSHIP.md)
 
 ---
 
